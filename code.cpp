@@ -1,10 +1,10 @@
 /* OPTYMALIZACJA KOMBINATORYCZNA
- * Temat: Metaheurystyki w problemie szeregowania zadañ
- * Autor: Bartosz Górka, Mateusz Kruszyna
- * Data: Grudzieñ 2016r.
+ * Temat: Metaheurystyki w problemie szeregowania zadaÅ„
+ * Autor: Bartosz GÃ³rka, Mateusz Kruszyna
+ * Data: GrudzieÅ„ 2016r.
 */
-
-// Biblioteki u¿ywane w programie
+// TEST 002
+// Biblioteki uÅ¼ywane w programie
 #include <iostream> // I/O stream
 #include <vector> // Vector table
 #include <time.h>
@@ -12,55 +12,55 @@
 #include <stdlib.h>
 #include <fstream> 
 #include <climits> // INT_MAX do generatora losowego
-#include <algorithm> // Sortowanie przerwañ
+#include <algorithm> // Sortowanie przerwaÅ„
 
 using namespace std;
 
 // DEFINICJE GLOBALNE
 #define DEBUG false // TRYB DEBUGOWANIA [true / false]
-#define MIN_TASK_COUNTER 30 // PO ilu iteracjach sprawdzaæ zapêtlenie [Wartoœæ liczbowa > 0]
+#define MIN_TASK_COUNTER 30 // PO ilu iteracjach sprawdzaÄ‡ zapÄ™tlenie [WartoÅ›Ä‡ liczbowa > 0]
 
-#define LOWER_TIME_TASK_LIMIT 5 // Dolne ograniczenie d³ugoœci zadania [Wartoœæ liczbowa > 0]
-#define UPPER_TIME_TASK_LIMIT 15 // Górne ograniczenie d³ugoœci zadania [Wartoœæ liczbowa > 0]
+#define LOWER_TIME_TASK_LIMIT 5 // Dolne ograniczenie dÅ‚ugoÅ›ci zadania [WartoÅ›Ä‡ liczbowa > 0]
+#define UPPER_TIME_TASK_LIMIT 15 // GÃ³rne ograniczenie dÅ‚ugoÅ›ci zadania [WartoÅ›Ä‡ liczbowa > 0]
 
-#define MAINTENANCE_FIRST_PROCESSOR 3 // Iloœæ przerwañ na pierwszej maszynie [Wartoœæ liczbowa >= 0]
-#define MAINTENANCE_SECOND_PROCESSOR 3 // Iloœæ przerwañ na drugiej maszynie [Wartoœæ liczbowa >= 0]
+#define MAINTENANCE_FIRST_PROCESSOR 3 // IloÅ›Ä‡ przerwaÅ„ na pierwszej maszynie [WartoÅ›Ä‡ liczbowa >= 0]
+#define MAINTENANCE_SECOND_PROCESSOR 3 // IloÅ›Ä‡ przerwaÅ„ na drugiej maszynie [WartoÅ›Ä‡ liczbowa >= 0]
 
-#define LOWER_TIME_MAINTENANCE_LIMIT 5 // Dolne ograniczenie d³ugoœci przerwania [Wartoœæ liczbowa >= 0]
-#define UPPER_TIME_MAINTENANCE_LIMIT 20 // Górne ograniczenie d³ugoœci przerwania [Wartoœæ liczbowa > 0]
+#define LOWER_TIME_MAINTENANCE_LIMIT 5 // Dolne ograniczenie dÅ‚ugoÅ›ci przerwania [WartoÅ›Ä‡ liczbowa >= 0]
+#define UPPER_TIME_MAINTENANCE_LIMIT 20 // GÃ³rne ograniczenie dÅ‚ugoÅ›ci przerwania [WartoÅ›Ä‡ liczbowa > 0]
 
-#define LOWER_READY_TIME_MAINTENANCE_LIMIT 0 // Dolne ograniczenie czasu gotowoœci przerwania [Wartoœæ liczbowa > 0]
-#define UPPER_READY_TIME_MAINTENANCE_LIMIT 200 // Górne ograniczenie czasu gotowoœci przerwania [Wartoœæ liczbowa > 0]
+#define LOWER_READY_TIME_MAINTENANCE_LIMIT 0 // Dolne ograniczenie czasu gotowoÅ›ci przerwania [WartoÅ›Ä‡ liczbowa > 0]
+#define UPPER_READY_TIME_MAINTENANCE_LIMIT 200 // GÃ³rne ograniczenie czasu gotowoÅ›ci przerwania [WartoÅ›Ä‡ liczbowa > 0]
 
 #define INSTANCE_SIZE 15 // Rozmiar instancji problemu
-#define INSTANCE_NUMBER 1 // Numer instancji problemu (mo¿e byæ zmieniana przy odczycie danych z pliku)
+#define INSTANCE_NUMBER 1 // Numer instancji problemu (moÅ¼e byÄ‡ zmieniana przy odczycie danych z pliku)
 
-ofstream debugFile; // Zmienna globalna u¿ywana przy DEBUG mode
+ofstream debugFile; // Zmienna globalna uÅ¼ywana przy DEBUG mode
 
-// Struktura danych w pamiêci
+// Struktura danych w pamiÄ™ci
 struct Task {
-	int assigment; // PrzydziaÅ‚ zadania pierwszego do maszyny x = [0, 1]
-	int durationFirstPart; // Czas czêœci 1 zadania
-	int durationSecondPart; // Czas czêœci 2 zadania
-	int timeEndFirstPart; // Moment zakoñczenia czêœci 1
-	int timeEndSecondPart; // Moment zakoñczenia czêœci 2
+	int assigment; // PrzydziaÄ¹â€š zadania pierwszego do maszyny x = [0, 1]
+	int durationFirstPart; // Czas czÄ™Å›ci 1 zadania
+	int durationSecondPart; // Czas czÄ™Å›ci 2 zadania
+	int timeEndFirstPart; // Moment zakoÅ„czenia czÄ™Å›ci 1
+	int timeEndSecondPart; // Moment zakoÅ„czenia czÄ™Å›ci 2
 };
 
 struct Maintenance {
 	int assigment; // Numer maszyny
-	int readyTime; // Czas gotowoœci (pojawienia siê)
+	int readyTime; // Czas gotowoÅ›ci (pojawienia siÄ™)
 	int duration; // Czas trwania przerwania
 };
 
-// Funkcja pomocnicza u¿ywana w sortowaniu przerwañ
+// Funkcja pomocnicza uÅ¼ywana w sortowaniu przerwaÅ„
 bool sortMaintenance(Maintenance * i, Maintenance * j) {return (i->readyTime < j->readyTime); }
 
-// Generator przestojóww na maszynie
+// Generator przestojÃ³ww na maszynie
 void GeneratorPrzestojow(vector<Maintenance*> &lista, int liczbaPrzerwanFirstProcessor, int liczbaPrzerwanSecondProcessor, int lowerTimeLimit, int upperTimeLimit, int lowerReadyTime, int upperReadyTime) {
 	srand(time(NULL));
 	
 	int size = (upperReadyTime - lowerReadyTime) + (upperTimeLimit - lowerTimeLimit);
-	bool * maintenanceTimeTable = new bool[size]; // Jedna tablica bo przerwania na maszynach nie mog¹ siê nak³adaæ na siebie 
+	bool * maintenanceTimeTable = new bool[size]; // Jedna tablica bo przerwania na maszynach nie mogÄ… siÄ™ nakÅ‚adaÄ‡ na siebie 
 	
 	for(int i = 0; i < size; i++) {
 		maintenanceTimeTable[i] = false;
@@ -71,7 +71,7 @@ void GeneratorPrzestojow(vector<Maintenance*> &lista, int liczbaPrzerwanFirstPro
 	for(int i = 0; i < liczbaPrzerwan; i++) {
 		Maintenance * przerwa = new Maintenance;
 		
-		// Losowanie przerwy na któr¹ maszynê ma trafiæ
+		// Losowanie przerwy na ktÃ³rÄ… maszynÄ™ ma trafiÄ‡
 		if(liczbaPrzerwanFirstProcessor == 0) {
 			przerwa->assigment = 1;
 			liczbaPrzerwanSecondProcessor--;
@@ -90,7 +90,7 @@ void GeneratorPrzestojow(vector<Maintenance*> &lista, int liczbaPrzerwanFirstPro
 			int duration = lowerTimeLimit + (int)(rand() / (RAND_MAX + 1.0) * upperTimeLimit);
 			przerwa->duration = duration;
 			
-		// Random punkt startu + sprawdzenie czy jest to mo¿liwe
+		// Random punkt startu + sprawdzenie czy jest to moÅ¼liwe
 			int readyTime = 0;
 			int startTimeCheck, stopTimeCheck = 0;
 			
@@ -99,17 +99,17 @@ void GeneratorPrzestojow(vector<Maintenance*> &lista, int liczbaPrzerwanFirstPro
 				
 				startTimeCheck = readyTime - lowerReadyTime;
 				stopTimeCheck = startTimeCheck + duration;
-				// Sprawdzenie czy mo¿na daæ przerwanie od readyTime
+				// Sprawdzenie czy moÅ¼na daÄ‡ przerwanie od readyTime
 					bool repeatCheck = false;
 					for(int j = startTimeCheck; j < stopTimeCheck; j++) {
 						if(maintenanceTimeTable[j]) {
 							repeatCheck = true;
-							break; // Konieczne jest ponowne losowanie czasu rozpoczêcia
+							break; // Konieczne jest ponowne losowanie czasu rozpoczÄ™cia
 						}
 					}
 					
 					if(!repeatCheck) {
-						break; // Mo¿na opuœciæ pêtle while - znaleziono konfiguracjê dla przerwania
+						break; // MoÅ¼na opuÅ›ciÄ‡ pÄ™tle while - znaleziono konfiguracjÄ™ dla przerwania
 					}
 			}
 			
@@ -118,7 +118,7 @@ void GeneratorPrzestojow(vector<Maintenance*> &lista, int liczbaPrzerwanFirstPro
 					maintenanceTimeTable[j] = true;
 				}
 			
-			// Uzupe³nienie danych o przerwaniu
+			// UzupeÅ‚nienie danych o przerwaniu
 				przerwa->readyTime = readyTime;
 				przerwa->duration = duration;
 			
@@ -126,7 +126,7 @@ void GeneratorPrzestojow(vector<Maintenance*> &lista, int liczbaPrzerwanFirstPro
 				lista.push_back(przerwa);
 	}
 	
-	// Czyszczenie pamiêci - zwalnianie niepotrzebnych zasobów
+	// Czyszczenie pamiÄ™ci - zwalnianie niepotrzebnych zasobÃ³w
 		delete maintenanceTimeTable;
 }
 
@@ -137,14 +137,14 @@ void GeneratorInstancji(vector<Task*> &lista, int n, int lowerTimeLimit, int upp
 	for(int i = 0; i < n; i++) {
 		Task * zadanie = new Task;
 		
-		// Przydzia³ maszyny do czêœci 1 zadania
+		// PrzydziaÅ‚ maszyny do czÄ™Å›ci 1 zadania
 			zadanie->assigment = rand() % 2;
 		
 		// Randomy na czas trwania zadania
 			zadanie->durationFirstPart = lowerTimeLimit + (int)(rand() / (RAND_MAX + 1.0) * upperTimeLimit);
 			zadanie->durationSecondPart = lowerTimeLimit + (int)(rand() / (RAND_MAX + 1.0) * upperTimeLimit);
 			
-		// Czas zakoñczenia póki co ustawiony na 0 = zadanie nie by³o u¿ywane
+		// Czas zakoÅ„czenia pÃ³ki co ustawiony na 0 = zadanie nie byÅ‚o uÅ¼ywane
 			zadanie->timeEndFirstPart = 0;
 			zadanie->timeEndSecondPart = 0;
 		
@@ -161,7 +161,7 @@ void ZapiszInstancjeDoPliku(vector<Task*> &listaZadan, vector<Maintenance*> &lis
 	if(file.is_open()) {
 		file << "**** " << numerInstancjiProblemu << " ****" << endl;
 		
-		// Uzupe³nienie pliku o wygenerowane czasy pracy
+		// UzupeÅ‚nienie pliku o wygenerowane czasy pracy
 			int iloscZadan = listaZadan.size();
 			file << iloscZadan << endl;
 			
@@ -170,7 +170,7 @@ void ZapiszInstancjeDoPliku(vector<Task*> &listaZadan, vector<Maintenance*> &lis
 				<< listaZadan[i]->assigment << ":" << 1 - listaZadan[i]->assigment << ";" << endl;
 			}
 		
-		// Uzupe³nienie pliku o czasy przestojów maszyn
+		// UzupeÅ‚nienie pliku o czasy przestojÃ³w maszyn
 			int iloscPrzestojow = listaPrzerwan.size();
 			for(int i = 0; i < iloscPrzestojow; i++) {
 				file << i << ":" << listaPrzerwan[i]->assigment << ":" << listaPrzerwan[i]->duration << ":" << listaPrzerwan[i]->readyTime << ";" << endl;
@@ -182,7 +182,7 @@ void ZapiszInstancjeDoPliku(vector<Task*> &listaZadan, vector<Maintenance*> &lis
 	file.close();
 }
 
-// Zapis wyników do pliku tekstowego
+// Zapis wynikÃ³w do pliku tekstowego
 void ZapiszWynikiDoPliku(vector<Task*> &listaZadan, int numerInstancjiProblemu) {
 	ofstream file;
 	file.open("wynik.txt");	
@@ -190,7 +190,7 @@ void ZapiszWynikiDoPliku(vector<Task*> &listaZadan, int numerInstancjiProblemu) 
 	if(file.is_open()) {
 		file << "**** WYNIKI DLA " << numerInstancjiProblemu << " ****" << endl;
 		
-		// Uzupe³nienie pliku o rozwi¹zanie
+		// UzupeÅ‚nienie pliku o rozwiÄ…zanie
 			int iloscZadan = listaZadan.size();			
 			for(int i = 0; i < iloscZadan; i++) {
 				file << listaZadan[i]->durationFirstPart << ":" << listaZadan[i]->durationSecondPart << ":"
@@ -200,7 +200,7 @@ void ZapiszWynikiDoPliku(vector<Task*> &listaZadan, int numerInstancjiProblemu) 
 	}
 }
 
-// Wczytywanie instancji z pliku do pamiêci
+// Wczytywanie instancji z pliku do pamiÄ™ci
 void WczytajDaneZPliku(vector<Task*> &listaZadan, vector<Maintenance*> &listaPrzerwan, int &numerInstancjiProblemu) {
 	FILE *file;
 	file = fopen("instancje.txt", "r");
@@ -209,14 +209,14 @@ void WczytajDaneZPliku(vector<Task*> &listaZadan, vector<Maintenance*> &listaPrz
 		// Pobranie numeru instancji problemu
 			fscanf(file, "**** %d ****", &numerInstancjiProblemu);
 			
-		// Pobranie liczby zadañ
+		// Pobranie liczby zadaÅ„
 			int liczbaZadan = 0;
 			fscanf(file, "%d", &liczbaZadan);
 		
 		// Zmienne pomocnicze w tworzeniu zadania
 			int assigmentFirstPart, assigmentSecondPart, durationFirstPart, durationSecondPart;
 		
-		// Pobranie wartoœci zadania z pliku instancji
+		// Pobranie wartoÅ›ci zadania z pliku instancji
 			for(int i = 0; i < liczbaZadan; i++) {
 				// Odczyt wpisu
 					fscanf(file, "%d:%d:%d:%d;", &durationFirstPart, &durationSecondPart, &assigmentFirstPart, &assigmentSecondPart);		
@@ -224,45 +224,45 @@ void WczytajDaneZPliku(vector<Task*> &listaZadan, vector<Maintenance*> &listaPrz
 				// Utworzenie zadania
 					Task * zadanie = new Task;
 					
-				// Ustawienie wartoœci zadania
+				// Ustawienie wartoÅ›ci zadania
 					zadanie->assigment = assigmentFirstPart;
 					zadanie->durationFirstPart = durationFirstPart;
 					zadanie->durationSecondPart = durationSecondPart;
 					zadanie->timeEndFirstPart = 0;
 					zadanie->timeEndSecondPart = 0;
 					
-				// Dodanie zadania do wektora zadañ
+				// Dodanie zadania do wektora zadaÅ„
 					listaZadan.push_back(zadanie);
 			}
 			
-		// Zestaw zmiennych u¿ywanych przy odczycie przerwañ na maszynach
+		// Zestaw zmiennych uÅ¼ywanych przy odczycie przerwaÅ„ na maszynach
 			int assigment, duration, readyTime, numer;
 			int oldNumber = -1;
 			
-		// Pobranie wartoœci dotycz¹cych przerwañ
+		// Pobranie wartoÅ›ci dotyczÄ…cych przerwaÅ„
 			while(fscanf(file, "%d:%d:%d:%d;", &numer, &assigment, &duration, &readyTime)) {
-				// Sprawdzenie czy nie mamy zapêtlenia
+				// Sprawdzenie czy nie mamy zapÄ™tlenia
 					if(oldNumber == numer)
 						break;
 						
 				// Utworzenie przerwy
 					Maintenance * przerwa = new Maintenance;
 					
-				// Ustawienie wartoœci zadania
+				// Ustawienie wartoÅ›ci zadania
 					przerwa->assigment = assigment;
 					przerwa->duration = duration;
 					przerwa->readyTime = readyTime;
 					
-				// Dodanie zadania do wektora zadañ
+				// Dodanie zadania do wektora zadaÅ„
 					listaPrzerwan.push_back(przerwa);
 					
-				// Zmienna pomocnicza do eliminacji zapêtleñ przy odczycie
+				// Zmienna pomocnicza do eliminacji zapÄ™tleÅ„ przy odczycie
 					oldNumber = numer;
 			}
 	}
 }
 
-// Odczyt przerwañ na maszynach na ekran
+// Odczyt przerwaÅ„ na maszynach na ekran
 void OdczytPrzerwan(vector<Maintenance*> &listaPrzerwan) {
 	int size = listaPrzerwan.size();
 	for(int i = 0; i < size; i++) {
@@ -270,32 +270,32 @@ void OdczytPrzerwan(vector<Maintenance*> &listaPrzerwan) {
 	}
 }
 
-// Generator rozwi¹zañ losowych
+// Generator rozwiÄ…zaÅ„ losowych
 vector<Task*> GeneratorLosowy(vector<Task*> &listaZadan, vector<Maintenance*> &listaPrzerwanFirstProcessor, vector<Maintenance*> &listaPrzerwanSecondProcessor, int iloscZadan) {
-	// Utworzenie kopii zadañ aby móc tworzyæ swoje rozwi¹zanie
+	// Utworzenie kopii zadaÅ„ aby mÃ³c tworzyÄ‡ swoje rozwiÄ…zanie
 		vector<Task*> zadaniaLokalne(listaZadan);
 	
-	// Zmienne u¿ywane w przebiegu pracy GeneratoraLosowego	
+	// Zmienne uÅ¼ywane w przebiegu pracy GeneratoraLosowego	
 		int numerPrzerwaniaFirstProcessor = 0; // Numer aktualnego przerwania na procesorze pierwszym
 		int numerPrzerwaniaSecondProcessor = 0; // Numer aktualnego przerwania na procesorze drugim
-		int count = 0; // Licznik przeliczonych ju¿ zadañ
+		int count = 0; // Licznik przeliczonych juÅ¼ zadaÅ„
 		int numerZadania = 0; // Numer aktualnie rozpatrywanego zadania (losowe)
-		int najblizszyMaintenanceFirstProcessor = listaPrzerwanFirstProcessor[numerPrzerwaniaFirstProcessor]->readyTime; // Czas momentu ROZPOCZÊCIA przerwania na procesorze pierwszym
-		int najblizszyMaintenanceSecondProcessor = listaPrzerwanSecondProcessor[numerPrzerwaniaSecondProcessor]->readyTime; // Czas momentu ROZPOCZÊCIA przerwania na procesorze drugim 
+		int najblizszyMaintenanceFirstProcessor = listaPrzerwanFirstProcessor[numerPrzerwaniaFirstProcessor]->readyTime; // Czas momentu ROZPOCZÄ˜CIA przerwania na procesorze pierwszym
+		int najblizszyMaintenanceSecondProcessor = listaPrzerwanSecondProcessor[numerPrzerwaniaSecondProcessor]->readyTime; // Czas momentu ROZPOCZÄ˜CIA przerwania na procesorze drugim 
 		int timeFirstProcessor = 0; // Zmienna czasowa - procesor pierwszy
 		int timeSecondProcessor = 0; // Zmienna czasowa - procesor drugi
-		int maxCount = 2 * iloscZadan; // Iloœæ koniecznych edycji w zadaniach (part I + part II w ka¿dym zadaniu)
-		int listaPrzerwanFirstProcessorSize = listaPrzerwanFirstProcessor.size(); // Iloœæ przerwañ dla pierwszego procesora - aby nie liczyæ za ka¿dym razem tej wartoœci
-		int listaPrzerwanSecondProcessorSize = listaPrzerwanSecondProcessor.size(); // Iloœæ przerwañ dla drugiej maszyny - podonie jak wy¿ej, unikamy niepotrzebnego, wielokrotnego liczenia tej wartoœci
+		int maxCount = 2 * iloscZadan; // IloÅ›Ä‡ koniecznych edycji w zadaniach (part I + part II w kaÅ¼dym zadaniu)
+		int listaPrzerwanFirstProcessorSize = listaPrzerwanFirstProcessor.size(); // IloÅ›Ä‡ przerwaÅ„ dla pierwszego procesora - aby nie liczyÄ‡ za kaÅ¼dym razem tej wartoÅ›ci
+		int listaPrzerwanSecondProcessorSize = listaPrzerwanSecondProcessor.size(); // IloÅ›Ä‡ przerwaÅ„ dla drugiej maszyny - podonie jak wyÅ¼ej, unikamy niepotrzebnego, wielokrotnego liczenia tej wartoÅ›ci
 		
-	// Tworzymy dwie tablice pomocnicze do sprawdzania czy zadanie by³o ju¿ uwzglêdnione
-		bool * firstPart = new bool[iloscZadan]; // Czêœæ I zadania - czy by³a uwzglêdniona (jeœli tak to true)
-		bool * secondPart = new bool[iloscZadan]; // Czêœæ II zadania - czy by³a uwzglêdniona (jeœli tak to true)
+	// Tworzymy dwie tablice pomocnicze do sprawdzania czy zadanie byÅ‚o juÅ¼ uwzglÄ™dnione
+		bool * firstPart = new bool[iloscZadan]; // CzÄ™Å›Ä‡ I zadania - czy byÅ‚a uwzglÄ™dniona (jeÅ›li tak to true)
+		bool * secondPart = new bool[iloscZadan]; // CzÄ™Å›Ä‡ II zadania - czy byÅ‚a uwzglÄ™dniona (jeÅ›li tak to true)
 	
-	// Licznik odwiedzin w ka¿dym z zadañ
-		int * licznikOdwiedzonych = new int[iloscZadan]; // Licznik odwiedzeñ w danym zadaniu aby unikaæ pêtli
+	// Licznik odwiedzin w kaÅ¼dym z zadaÅ„
+		int * licznikOdwiedzonych = new int[iloscZadan]; // Licznik odwiedzeÅ„ w danym zadaniu aby unikaÄ‡ pÄ™tli
 		
-	// Pêtla startowa zeruj¹ca tablice
+	// PÄ™tla startowa zerujÄ…ca tablice
 		for(int i = 0; i < iloscZadan; i++) {
 			firstPart[i] = false;
 			secondPart[i] = false;
@@ -306,7 +306,7 @@ vector<Task*> GeneratorLosowy(vector<Task*> &listaZadan, vector<Maintenance*> &l
 			// Losujemy numer zadania
 				numerZadania = rand() % iloscZadan;
 			
-			// Sprawdzamy czy nie by³o ju¿ przypadkiem u¿yte ca³e - w takim przypadku robimy kolejn¹ iteracjê pêtli i losujemy na nowo numer zadania
+			// Sprawdzamy czy nie byÅ‚o juÅ¼ przypadkiem uÅ¼yte caÅ‚e - w takim przypadku robimy kolejnÄ… iteracjÄ™ pÄ™tli i losujemy na nowo numer zadania
 				if(firstPart[numerZadania] && secondPart[numerZadania])
 					continue; // Skok do kolejnej iteracji
 				
@@ -316,13 +316,13 @@ vector<Task*> GeneratorLosowy(vector<Task*> &listaZadan, vector<Maintenance*> &l
 					<< " przerwy: " << najblizszyMaintenanceFirstProcessor << "|" << najblizszyMaintenanceSecondProcessor << endl;
 				}
 
-			// Zadanie nie by³o jeszcze u¿ywane
+			// Zadanie nie byÅ‚o jeszcze uÅ¼ywane
 				if(!firstPart[numerZadania]) {
 					// Sprawdzamy typ zadania
-					if(zadaniaLokalne[numerZadania]->assigment == 0) { // Przydzia³ na pierwsz¹ maszynê
-						// Dwa mo¿liwe przypadki - zadanie umieszczamy przed przerw¹ lub po niej
+					if(zadaniaLokalne[numerZadania]->assigment == 0) { // PrzydziaÅ‚ na pierwszÄ… maszynÄ™
+						// Dwa moÅ¼liwe przypadki - zadanie umieszczamy przed przerwÄ… lub po niej
 						
-						// Sprawdzamy czy zadanie mo¿na umieœciæ przed maintenance najbli¿szym (je¿eli jest  on -1 to ju¿ nie wyst¹pi)
+						// Sprawdzamy czy zadanie moÅ¼na umieÅ›ciÄ‡ przed maintenance najbliÅ¼szym (jeÅ¼eli jest  on -1 to juÅ¼ nie wystÄ…pi)
 						if((timeFirstProcessor + zadaniaLokalne[numerZadania]->durationFirstPart) <= najblizszyMaintenanceFirstProcessor
 							|| (najblizszyMaintenanceFirstProcessor == -1)) {
 							// Ustawiamy czas na maszynie pierwszej
@@ -331,49 +331,49 @@ vector<Task*> GeneratorLosowy(vector<Task*> &listaZadan, vector<Maintenance*> &l
 								if(DEBUG) 
 									debugFile << "Czas FM: " << timeFirstProcessor << endl;
 							
-							// Ustawiamy czas zakoñczenia zadania
+							// Ustawiamy czas zakoÅ„czenia zadania
 								zadaniaLokalne[numerZadania]->timeEndFirstPart = timeFirstProcessor;
 								
-							// Ustawiamy ¿e zadanie zosta³o u¿yte (part I)
+							// Ustawiamy Å¼e zadanie zostaÅ‚o uÅ¼yte (part I)
 								firstPart[numerZadania] = true;	
 							
-						} else { // Nie umieœciliœmy zadania przed przerw¹
+						} else { // Nie umieÅ›ciliÅ›my zadania przed przerwÄ…
 							while(true) {
-								// Przesuwamy siê na chwilê po przerwaniu
+								// Przesuwamy siÄ™ na chwilÄ™ po przerwaniu
 									timeFirstProcessor = najblizszyMaintenanceFirstProcessor + listaPrzerwanFirstProcessor[numerPrzerwaniaFirstProcessor]->duration;
 								
-								// Ustawiamy czas nastêpnego przerwania
+								// Ustawiamy czas nastÄ™pnego przerwania
 									numerPrzerwaniaFirstProcessor++;
 									if(numerPrzerwaniaFirstProcessor < listaPrzerwanFirstProcessorSize)
 										najblizszyMaintenanceFirstProcessor = listaPrzerwanFirstProcessor[numerPrzerwaniaFirstProcessor]->readyTime;
 									else
 										najblizszyMaintenanceFirstProcessor = -1;
 										
-								// Musismy sprawdziæ czy uda siê nam wcisn¹æ nasze zadanie
+								// Musismy sprawdziÄ‡ czy uda siÄ™ nam wcisnÄ…Ä‡ nasze zadanie
 									if((timeFirstProcessor + zadaniaLokalne[numerZadania]->durationFirstPart) <= najblizszyMaintenanceFirstProcessor
 										|| (najblizszyMaintenanceFirstProcessor == -1))
 										break;
 							}
 							
-							// Po opuszczeniu pêtli mamy poprawn¹ wartoœæ w zmiennej timeFirstProcessor (wystarczy zwiêkszyæ j¹ o d³ugoœæ zadania)
+							// Po opuszczeniu pÄ™tli mamy poprawnÄ… wartoÅ›Ä‡ w zmiennej timeFirstProcessor (wystarczy zwiÄ™kszyÄ‡ jÄ… o dÅ‚ugoÅ›Ä‡ zadania)
 								timeFirstProcessor += zadaniaLokalne[numerZadania]->durationFirstPart;
 							
 								if(DEBUG)		
 									debugFile << "Czas FM " << timeFirstProcessor << endl;
 							
-							// Ustawiamy zmienn¹ czasow¹ zakoñczenia zadania
+							// Ustawiamy zmiennÄ… czasowÄ… zakoÅ„czenia zadania
 								zadaniaLokalne[numerZadania]->timeEndFirstPart = timeFirstProcessor;
 								
-							// Zaznaczamy w tablicy pomocniczej ¿e czêœæ pierwsza zadania by³a u¿yta
+							// Zaznaczamy w tablicy pomocniczej Å¼e czÄ™Å›Ä‡ pierwsza zadania byÅ‚a uÅ¼yta
 								firstPart[numerZadania] = true;									
 						}
 						
-						// Zwiêkszamy iloœæ zadañ jakie przerobiliœmy
+						// ZwiÄ™kszamy iloÅ›Ä‡ zadaÅ„ jakie przerobiliÅ›my
 							count++;
 							
-					} else { // Przydzia³ zadania na maszynê nr 2
+					} else { // PrzydziaÅ‚ zadania na maszynÄ™ nr 2
 						
-						// Sprawdzamy czy zadanie mo¿na umieœciæ przed maintenance najbli¿szym (je¿eli jest  on -1 to ju¿ nie wyst¹pi)
+						// Sprawdzamy czy zadanie moÅ¼na umieÅ›ciÄ‡ przed maintenance najbliÅ¼szym (jeÅ¼eli jest  on -1 to juÅ¼ nie wystÄ…pi)
 						if((timeSecondProcessor + zadaniaLokalne[numerZadania]->durationFirstPart) <= najblizszyMaintenanceSecondProcessor
 							|| (najblizszyMaintenanceSecondProcessor == -1)) {
 							// Ustawiamy czas na maszynie drugiej
@@ -382,18 +382,18 @@ vector<Task*> GeneratorLosowy(vector<Task*> &listaZadan, vector<Maintenance*> &l
 								if(DEBUG)
 									debugFile << "Czas SM: " << timeSecondProcessor << endl;
 							
-							// Ustawiamy czas zakoñczenia zadania
+							// Ustawiamy czas zakoÅ„czenia zadania
 								zadaniaLokalne[numerZadania]->timeEndFirstPart = timeSecondProcessor;
 								
-							// Ustawiamy ¿e zadanie zosta³o u¿yte (part I)
+							// Ustawiamy Å¼e zadanie zostaÅ‚o uÅ¼yte (part I)
 								firstPart[numerZadania] = true;	
 							
-						} else { // Nie umieœciliœmy zadania przed przerw¹
+						} else { // Nie umieÅ›ciliÅ›my zadania przed przerwÄ…
 							while(true) {
-								// Przesuwamy siê na chwilê po przerwaniu
+								// Przesuwamy siÄ™ na chwilÄ™ po przerwaniu
 									timeSecondProcessor = najblizszyMaintenanceSecondProcessor + listaPrzerwanSecondProcessor[numerPrzerwaniaSecondProcessor]->duration;
 								
-								// Ustawiamy czas nastêpnego przerwania
+								// Ustawiamy czas nastÄ™pnego przerwania
 									numerPrzerwaniaSecondProcessor++;
 									if(numerPrzerwaniaSecondProcessor < listaPrzerwanSecondProcessorSize)
 										najblizszyMaintenanceSecondProcessor = listaPrzerwanSecondProcessor[numerPrzerwaniaSecondProcessor]->readyTime;
@@ -403,46 +403,46 @@ vector<Task*> GeneratorLosowy(vector<Task*> &listaZadan, vector<Maintenance*> &l
 									if(DEBUG)
 										debugFile << "Druga = " << timeSecondProcessor << " oraz " << najblizszyMaintenanceSecondProcessor << endl;
 										
-								// Musismy sprawdziæ czy uda siê nam wcisn¹æ nasze zadanie
+								// Musismy sprawdziÄ‡ czy uda siÄ™ nam wcisnÄ…Ä‡ nasze zadanie
 									if((timeSecondProcessor + zadaniaLokalne[numerZadania]->durationFirstPart) <= najblizszyMaintenanceSecondProcessor
 										|| (najblizszyMaintenanceSecondProcessor == -1))
 										break;
 							}
 							
-							// Po opuszczeniu pêtli mamy poprawn¹ wartoœæ w zmiennej timeSecondProcessor(wystarczy zwiêkszyæ j¹ o d³ugoœæ zadania)
+							// Po opuszczeniu pÄ™tli mamy poprawnÄ… wartoÅ›Ä‡ w zmiennej timeSecondProcessor(wystarczy zwiÄ™kszyÄ‡ jÄ… o dÅ‚ugoÅ›Ä‡ zadania)
 								timeSecondProcessor += zadaniaLokalne[numerZadania]->durationFirstPart;
 							
 								if(DEBUG)		
 									debugFile << "Czas SM " << timeSecondProcessor << endl;
 							
-							// Ustawiamy zmienn¹ czasow¹ zakoñczenia zadania
+							// Ustawiamy zmiennÄ… czasowÄ… zakoÅ„czenia zadania
 								zadaniaLokalne[numerZadania]->timeEndFirstPart = timeSecondProcessor;
 								
-							// Zaznaczamy w tablicy pomocniczej ¿e czêœæ pierwsza zadania by³a u¿yta
+							// Zaznaczamy w tablicy pomocniczej Å¼e czÄ™Å›Ä‡ pierwsza zadania byÅ‚a uÅ¼yta
 								firstPart[numerZadania] = true;									
 						}
 						
-						// Zwiêkszamy iloœæ zadañ jakie przerobiliœmy
+						// ZwiÄ™kszamy iloÅ›Ä‡ zadaÅ„ jakie przerobiliÅ›my
 							count++;
 					}
 				} else {
-					// PRZYDZIELAMY DRUG¥ CZÊŒÆ ZADANIA
-					// Mog¹ wyst¹piæ problemy z zapêtleniami = dlatego jest dodatkowe zabezpieczenie w postaci liczenia ile razy odwiedzamy wartoœæ
+					// PRZYDZIELAMY DRUGÄ„ CZÄ˜ÅšÄ† ZADANIA
+					// MogÄ… wystÄ…piÄ‡ problemy z zapÄ™tleniami = dlatego jest dodatkowe zabezpieczenie w postaci liczenia ile razy odwiedzamy wartoÅ›Ä‡
 					licznikOdwiedzonych[numerZadania]++;
 					
 					// Sprawdzamy typ zadania
-					if(zadaniaLokalne[numerZadania]->assigment == 0) { // Przydzia³ na pierwsz¹ maszynê
-						// Sprawdzamy czy czas na maszynie nie jest mniejszy od zakoñczenia siê pierwszej czêœci
+					if(zadaniaLokalne[numerZadania]->assigment == 0) { // PrzydziaÅ‚ na pierwszÄ… maszynÄ™
+						// Sprawdzamy czy czas na maszynie nie jest mniejszy od zakoÅ„czenia siÄ™ pierwszej czÄ™Å›ci
 						if(timeSecondProcessor < zadaniaLokalne[numerZadania]->timeEndFirstPart) {
-							// Sprawdzamy czy nie jesteœmy po raz x w pêtli
+							// Sprawdzamy czy nie jesteÅ›my po raz x w pÄ™tli
 							if(licznikOdwiedzonych[numerZadania] >= MIN_TASK_COUNTER) {
 								if(DEBUG)
 									debugFile << "Przestawiono czas! M1" << endl;
-								// Tworzymy pomocnicz¹ zmienn¹ odleg³oœci
+								// Tworzymy pomocniczÄ… zmiennÄ… odlegÅ‚oÅ›ci
 									int minTime = INT_MAX;
 									int tempTime = 0;
 									
-								// Resetujemy liczniki i patrzymy na odleg³oœci
+								// Resetujemy liczniki i patrzymy na odlegÅ‚oÅ›ci
 									for(int i = 0; i < iloscZadan; i++) {
 										licznikOdwiedzonych[i] = 0;
 										
@@ -456,66 +456,66 @@ vector<Task*> GeneratorLosowy(vector<Task*> &listaZadan, vector<Maintenance*> &l
 								// Przestawiamy czas na maszynie
 									timeSecondProcessor += minTime;
 									
-							} else // Je¿eli nie mamy osi¹gniêtej wartoœci to pomijamy iteracjê
+							} else // JeÅ¼eli nie mamy osiÄ…gniÄ™tej wartoÅ›ci to pomijamy iteracjÄ™
 								continue;
 						}
 							
-						// Zadanie mo¿na umieœciæ
-							// Sprawdzamy czy zadanie mo¿na umieœciæ przed maintenance najbli¿szym (je¿eli jest  on -1 to ju¿ nie wyst¹pi)
+						// Zadanie moÅ¼na umieÅ›ciÄ‡
+							// Sprawdzamy czy zadanie moÅ¼na umieÅ›ciÄ‡ przed maintenance najbliÅ¼szym (jeÅ¼eli jest  on -1 to juÅ¼ nie wystÄ…pi)
 							if((timeSecondProcessor + zadaniaLokalne[numerZadania]->durationSecondPart) <= najblizszyMaintenanceSecondProcessor
 								|| (najblizszyMaintenanceSecondProcessor == -1)) {
 								// Ustawiamy czas na maszynie pierwszej
 									timeSecondProcessor += zadaniaLokalne[numerZadania]->durationSecondPart;
 								
-								// Ustawiamy czas zakoñczenia zadania
+								// Ustawiamy czas zakoÅ„czenia zadania
 									zadaniaLokalne[numerZadania]->timeEndSecondPart = timeSecondProcessor;
 									
-								// Ustawiamy ¿e zadanie zosta³o u¿yte (part II)
+								// Ustawiamy Å¼e zadanie zostaÅ‚o uÅ¼yte (part II)
 									secondPart[numerZadania] = true;	
 							
-							} else { // Nie umieœciliœmy zadania przed przerw¹
+							} else { // Nie umieÅ›ciliÅ›my zadania przed przerwÄ…
 								while(true) {
-									// Przesuwamy siê na chwilê po przerwaniu
+									// Przesuwamy siÄ™ na chwilÄ™ po przerwaniu
 										timeSecondProcessor = najblizszyMaintenanceSecondProcessor + listaPrzerwanSecondProcessor[numerPrzerwaniaSecondProcessor]->duration;
 									
-									// Ustawiamy czas nastêpnego przerwania
+									// Ustawiamy czas nastÄ™pnego przerwania
 										numerPrzerwaniaSecondProcessor++;
 										if(numerPrzerwaniaSecondProcessor < listaPrzerwanSecondProcessorSize)
 											najblizszyMaintenanceSecondProcessor = listaPrzerwanSecondProcessor[numerPrzerwaniaSecondProcessor]->readyTime;
 										else
 											najblizszyMaintenanceSecondProcessor = -1;
 											
-									// Musismy sprawdziæ czy uda siê nam wcisn¹æ nasze zadanie
+									// Musismy sprawdziÄ‡ czy uda siÄ™ nam wcisnÄ…Ä‡ nasze zadanie
 										if((timeSecondProcessor + zadaniaLokalne[numerZadania]->durationSecondPart) <= najblizszyMaintenanceSecondProcessor
 											|| (najblizszyMaintenanceSecondProcessor == -1))
 											break;
 								}
 								
-								// Po opuszczeniu pêtli mamy poprawn¹ wartoœæ w zmiennej timeSecondProcessor (wystarczy zwiêkszyæ j¹ o d³ugoœæ zadania)
+								// Po opuszczeniu pÄ™tli mamy poprawnÄ… wartoÅ›Ä‡ w zmiennej timeSecondProcessor (wystarczy zwiÄ™kszyÄ‡ jÄ… o dÅ‚ugoÅ›Ä‡ zadania)
 									timeSecondProcessor += zadaniaLokalne[numerZadania]->durationSecondPart;
 										
-								// Ustawiamy zmienn¹ czasow¹ zakoñczenia zadania
+								// Ustawiamy zmiennÄ… czasowÄ… zakoÅ„czenia zadania
 									zadaniaLokalne[numerZadania]->timeEndSecondPart = timeSecondProcessor;
 									
-								// Zaznaczamy w tablicy pomocniczej ¿e czêœæ pierwsza zadania by³a u¿yta
+								// Zaznaczamy w tablicy pomocniczej Å¼e czÄ™Å›Ä‡ pierwsza zadania byÅ‚a uÅ¼yta
 									secondPart[numerZadania] = true;
 							}
 						
-							// Zwiêkszamy iloœæ zadañ jakie przerobiliœmy
+							// ZwiÄ™kszamy iloÅ›Ä‡ zadaÅ„ jakie przerobiliÅ›my
 								count++;
 					} else {
-						// Sprawdzamy czy czas na maszynie nie jest mniejszy od zakoñczenia siê pierwszej czêœci
+						// Sprawdzamy czy czas na maszynie nie jest mniejszy od zakoÅ„czenia siÄ™ pierwszej czÄ™Å›ci
 						if(timeFirstProcessor < zadaniaLokalne[numerZadania]->timeEndFirstPart) {
-							// Sprawdzamy czy nie jesteœmy po raz x w pêtli
+							// Sprawdzamy czy nie jesteÅ›my po raz x w pÄ™tli
 							if(licznikOdwiedzonych[numerZadania] >= MIN_TASK_COUNTER) {
 								if(DEBUG)
 									debugFile << "Przestawiono czas! M0" << endl;
 									
-								// Tworzymy pomocnicz¹ zmienn¹ odleg³oœci
+								// Tworzymy pomocniczÄ… zmiennÄ… odlegÅ‚oÅ›ci
 									int minTime = INT_MAX;
 									int tempTime = 0;
 									
-								// Resetujemy liczniki i patrzymy na odleg³oœci
+								// Resetujemy liczniki i patrzymy na odlegÅ‚oÅ›ci
 									for(int i = 0; i < iloscZadan; i++) {
 										licznikOdwiedzonych[i] = 0;
 										
@@ -529,58 +529,58 @@ vector<Task*> GeneratorLosowy(vector<Task*> &listaZadan, vector<Maintenance*> &l
 								// Przestawiamy czas na maszynie
 									timeFirstProcessor += minTime;
 									
-							} else // Je¿eli nie mamy osi¹gniêtej wartoœci to pomijamy iteracjê
+							} else // JeÅ¼eli nie mamy osiÄ…gniÄ™tej wartoÅ›ci to pomijamy iteracjÄ™
 								continue;
 						}
 							
-						// Zadanie mo¿na umieœciæ
-							// Sprawdzamy czy zadanie mo¿na umieœciæ przed maintenance najbli¿szym (je¿eli jest  on -1 to ju¿ nie wyst¹pi)
+						// Zadanie moÅ¼na umieÅ›ciÄ‡
+							// Sprawdzamy czy zadanie moÅ¼na umieÅ›ciÄ‡ przed maintenance najbliÅ¼szym (jeÅ¼eli jest  on -1 to juÅ¼ nie wystÄ…pi)
 							if((timeFirstProcessor + zadaniaLokalne[numerZadania]->durationSecondPart) <= najblizszyMaintenanceFirstProcessor
 								|| (najblizszyMaintenanceFirstProcessor == -1)) {
 								// Ustawiamy czas na maszynie pierwszej
 									timeFirstProcessor += zadaniaLokalne[numerZadania]->durationSecondPart;
 								
-								// Ustawiamy czas zakoñczenia zadania
+								// Ustawiamy czas zakoÅ„czenia zadania
 									zadaniaLokalne[numerZadania]->timeEndSecondPart = timeFirstProcessor;
 									
-								// Ustawiamy ¿e zadanie zosta³o u¿yte (part II)
+								// Ustawiamy Å¼e zadanie zostaÅ‚o uÅ¼yte (part II)
 									secondPart[numerZadania] = true;	
 							
-							} else { // Nie umieœciliœmy zadania przed przerw¹
+							} else { // Nie umieÅ›ciliÅ›my zadania przed przerwÄ…
 								while(true) {
-									// Przesuwamy siê na chwilê po przerwaniu
+									// Przesuwamy siÄ™ na chwilÄ™ po przerwaniu
 										timeFirstProcessor = najblizszyMaintenanceFirstProcessor + listaPrzerwanFirstProcessor[numerPrzerwaniaFirstProcessor]->duration;
 									
-									// Ustawiamy czas nastêpnego przerwania
+									// Ustawiamy czas nastÄ™pnego przerwania
 										numerPrzerwaniaFirstProcessor++;
 										if(numerPrzerwaniaFirstProcessor < listaPrzerwanFirstProcessorSize)
 											najblizszyMaintenanceFirstProcessor = listaPrzerwanFirstProcessor[numerPrzerwaniaFirstProcessor]->readyTime;
 										else
 											najblizszyMaintenanceFirstProcessor = -1;
 											
-									// Musismy sprawdziæ czy uda siê nam wcisn¹æ nasze zadanie
+									// Musismy sprawdziÄ‡ czy uda siÄ™ nam wcisnÄ…Ä‡ nasze zadanie
 										if((timeFirstProcessor + zadaniaLokalne[numerZadania]->durationSecondPart) <= najblizszyMaintenanceFirstProcessor
 											|| (najblizszyMaintenanceFirstProcessor == -1))
 											break;
 								}
 								
-								// Po opuszczeniu pêtli mamy poprawn¹ wartoœæ w zmiennej timeSecondProcessor (wystarczy zwiêkszyæ j¹ o d³ugoœæ zadania)
+								// Po opuszczeniu pÄ™tli mamy poprawnÄ… wartoÅ›Ä‡ w zmiennej timeSecondProcessor (wystarczy zwiÄ™kszyÄ‡ jÄ… o dÅ‚ugoÅ›Ä‡ zadania)
 									timeFirstProcessor += zadaniaLokalne[numerZadania]->durationSecondPart;
 										
-								// Ustawiamy zmienn¹ czasow¹ zakoñczenia zadania
+								// Ustawiamy zmiennÄ… czasowÄ… zakoÅ„czenia zadania
 									zadaniaLokalne[numerZadania]->timeEndSecondPart = timeFirstProcessor;
 									
-								// Zaznaczamy w tablicy pomocniczej ¿e czêœæ pierwsza zadania by³a u¿yta
+								// Zaznaczamy w tablicy pomocniczej Å¼e czÄ™Å›Ä‡ pierwsza zadania byÅ‚a uÅ¼yta
 									secondPart[numerZadania] = true;
 							}
 						
-							// Zwiêkszamy iloœæ zadañ jakie przerobiliœmy
+							// ZwiÄ™kszamy iloÅ›Ä‡ zadaÅ„ jakie przerobiliÅ›my
 								count++;
 					}
 				}
 		}
 		
-		// Czyszczenie pamiêci - zwalnianie niepotrzebnych zasobów
+		// Czyszczenie pamiÄ™ci - zwalnianie niepotrzebnych zasobÃ³w
 			delete firstPart;
 			delete secondPart;
 			delete licznikOdwiedzonych;
@@ -588,9 +588,9 @@ vector<Task*> GeneratorLosowy(vector<Task*> &listaZadan, vector<Maintenance*> &l
 		return zadaniaLokalne;
 }
 
-// Podzia³ przerwañ na dwie listy - ka¿da maszyna osobno
+// PodziaÅ‚ przerwaÅ„ na dwie listy - kaÅ¼da maszyna osobno
 void PodzielPrzerwyNaMaszyny(vector<Maintenance*> &listaPrzerwan, vector<Maintenance*> &przerwaniaFirstProcessor, vector<Maintenance*> &przerwaniaSecondProcessor) {
-	// Zmienna pomocnicza by skróciæ czas pracy (nie trzeba x razy liczyæ)
+	// Zmienna pomocnicza by skrÃ³ciÄ‡ czas pracy (nie trzeba x razy liczyÄ‡)
 		int size = listaPrzerwan.size();
 
 	//Sprawdzamy do jakiej maszyny przypisane mamy przerwanie	
@@ -604,7 +604,7 @@ void PodzielPrzerwyNaMaszyny(vector<Maintenance*> &listaPrzerwan, vector<Mainten
 		}	
 }
 
-// Odczyt danych zadañ na ekran
+// Odczyt danych zadaÅ„ na ekran
 void OdczytDanychZadan(vector<Task*> &listaZadan) {
 	int size = listaZadan.size();
 	for(int i = 0; i < size; i++) {
@@ -613,16 +613,16 @@ void OdczytDanychZadan(vector<Task*> &listaZadan) {
 	}
 }
 
-// Sortowanie przerwañ wed³ug rosn¹cego czasu rozpoczêcia
+// Sortowanie przerwaÅ„ wedÅ‚ug rosnÄ…cego czasu rozpoczÄ™cia
 void SortujPrzerwania(vector<Maintenance*> &listaPrzerwan) {
-	// U¿ywamy algorytmicznej funkcji sort z ustawionym trybem sortowania aby przyspieszyæ pracê
+	// UÅ¼ywamy algorytmicznej funkcji sort z ustawionym trybem sortowania aby przyspieszyÄ‡ pracÄ™
 		sort(listaPrzerwan.begin(), listaPrzerwan.end(), sortMaintenance);
 }
 
-// Tworzenie timeline dla obserwacji wyników pracy
+// Tworzenie timeline dla obserwacji wynikÃ³w pracy
 void UtworzGraf(vector<Task*> &listaZadan, vector<Maintenance*> &listaPrzerwan, long int wynik) {
-	int iloscZadan = listaZadan.size(); // Iloœæ zadañ w systemie
-	int iloscPrzerwan = listaPrzerwan.size(); // Iloœæ okresów przestojów na maszynach
+	int iloscZadan = listaZadan.size(); // IloÅ›Ä‡ zadaÅ„ w systemie
+	int iloscPrzerwan = listaPrzerwan.size(); // IloÅ›Ä‡ okresÃ³w przestojÃ³w na maszynach
 	
 	ofstream file;
 	file.open("index.html");
@@ -648,7 +648,7 @@ void UtworzGraf(vector<Task*> &listaZadan, vector<Maintenance*> &listaPrzerwan, 
 			file << "[ 'M" << 2 - listaZadan[i]->assigment << "', 'Zadanie " << i + 1 << "', " << timeStart << ", " << timeStop << " ]," << endl;
 		}
 		
-	// Zapis przerwañ
+	// Zapis przerwaÅ„
 		for(int i = 0; i < iloscPrzerwan; i++) {
 			timeStart = listaPrzerwan[i]->readyTime;
 			timeStop = timeStart + listaPrzerwan[i]->duration;
@@ -662,7 +662,7 @@ void UtworzGraf(vector<Task*> &listaZadan, vector<Maintenance*> &listaPrzerwan, 
 		}
 }
 
-// Obliczanie wartoœci funkcji celu
+// Obliczanie wartoÅ›ci funkcji celu
 long int ObliczFunkcjeCelu(vector<Task*> &listaZadan) {
 	int size = listaZadan.size();
 	long int sum = 0;
@@ -679,16 +679,16 @@ int main() {
 	int rozmiarInstancji = INSTANCE_SIZE;
 	int numerInstancjiProblemu = INSTANCE_NUMBER;
 
-	// Utworzenie wektora na n zadañ
+	// Utworzenie wektora na n zadaÅ„
 		vector<Task*> listaZadan;
 
-	// Wektor przerwañ pracy na maszynach
+	// Wektor przerwaÅ„ pracy na maszynach
 		vector<Maintenance*> listaPrzerwan; 
 
-	// Wygenerowanie zadañ
+	// Wygenerowanie zadaÅ„
 		 GeneratorInstancji(listaZadan, rozmiarInstancji, LOWER_TIME_TASK_LIMIT, UPPER_TIME_TASK_LIMIT);
 
-//	 Wygenerowanie przerwañ	
+//	 Wygenerowanie przerwaÅ„	
 		 GeneratorPrzestojow(listaPrzerwan, MAINTENANCE_FIRST_PROCESSOR, MAINTENANCE_SECOND_PROCESSOR, LOWER_TIME_MAINTENANCE_LIMIT, UPPER_TIME_MAINTENANCE_LIMIT, LOWER_READY_TIME_MAINTENANCE_LIMIT, UPPER_READY_TIME_MAINTENANCE_LIMIT);
 		 OdczytPrzerwan(listaPrzerwan);
 
@@ -713,7 +713,7 @@ int main() {
 		long int wynik = ObliczFunkcjeCelu(listaZadan);
 		UtworzGraf(listaZadan, listaPrzerwan, wynik);		
 	
-	// Czyszczenie pamiêci - zwalnianie niepotrzebnych zasobów
+	// Czyszczenie pamiÄ™ci - zwalnianie niepotrzebnych zasobÃ³w
 		przerwaniaFirstProcessor.clear();
 		przerwaniaSecondProcessor.clear();
 		listaPrzerwan.clear();
