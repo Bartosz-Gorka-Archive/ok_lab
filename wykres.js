@@ -9,7 +9,9 @@ function drawChart(container, table) {
 	].concat(table));
 	
 	var options = {
-		'height':175,
+		height:175,
+		stroke: '#F00',
+		strokeWidth: 1,
 		timeline: { groupByRowLabel: true,colorByRowLabel: false }
 	};
 	chart.draw(dataTable, options);
@@ -21,7 +23,7 @@ function createDiv() {
 
 var resultsDiv = document.getElementById('results');
 
-function process(e){
+function process(e, fileName){
 	var text = e.target.result;
 	
 	var div = createDiv();
@@ -39,6 +41,7 @@ function process(e){
 	var idleM2count = parseInt(lines[7].split(",")[0]);
 	var idleM2duration = parseInt(lines[7].split(",")[1]);
 	
+	div.querySelector(".nazwaPliku").innerHTML = fileName;
 	div.querySelector(".wartoscFCelu").innerHTML = goalValue;
 	div.querySelector(".tytulGrafu").innerHTML = graphTitle;
 	div.querySelector(".lPrzerwM1").innerHTML = maintM1count;
@@ -50,15 +53,20 @@ function process(e){
 	div.querySelector(".lIdleM2").innerHTML = idleM2count;
 	div.querySelector(".cIdleM2").innerHTML = idleM2duration;
 	
-	var taskColor = '#F15025';
-	var maintColor = '#595959';
-	var idleColor = '#C1CAD6';
+	var taskColor2 = '#81F495';
+	var taskColor1 = '#96F550';
+	//var taskColor = 'stroke="black" stroke-width=15';
+	var maintColor1 = '#006DAA';
+	var maintColor2 = '#1B98E0';
+	var idleColor1 = '#EDD3C4';
+	var idleColor2 = '#C8ADC0';
 	
 	var tableToGraph = [];
 	
 	for(var k=2;k<4;k++){
 		var M = lines[k].slice(3).replace(/ /g,"").split(";");
 		var Mname = "";
+		var o=0,d=0,m=0;
 		if(k==2) Mname = "M1";
 		else Mname = "M2";
 		for(var i=0;i<M.length;i++){
@@ -67,10 +75,24 @@ function process(e){
 			var tempTaskTab = task.split(",");
 			var opName = tempTaskTab[0];
 			var opColor
-			if( opName[0]=="o") opColor = taskColor;
-			else if( opName[0]=="m") opColor = maintColor;
-			else if( opName[0]=="i") opColor = idleColor;
+			if( opName[0]=="o") {
+				if(o%2==0) opColor = taskColor1;
+				else opColor = taskColor2;
+				o++;
+			}
+			else if( opName[0]=="m"){
+				if(m%2==0) opColor = maintColor1;
+				else opColor = maintColor2;
+				m++;
+			}
+			else if( opName[0]=="i"){
+				if(d%2==0) opColor = idleColor1;
+				else opColor = idleColor2;
+				d++;
+			}
 			else opColor = '#ff0000';
+			//opColor = opColor+',\'stroke-width\'="0"';
+			
 			var opStart = parseInt(tempTaskTab[1]);
 			var opEnd = parseInt(tempTaskTab[2])+ opStart;
 			tableToGraph.push([Mname,opName,opColor,opStart,opEnd]);
@@ -81,11 +103,24 @@ function process(e){
 	
 }
 
+function makeProcess(fileName){
+	return function(e) {
+		process(e, fileName);
+	}
+};
+
 document.getElementById('upload').addEventListener('change', function(e) {
+	resultsDiv.innerHTML = '';
 	for(var i=0;i<this.files.length;i++) {
 		var file=this.files[i];
 		var reader = new FileReader();
-		reader.onloadend = process;
+		reader.onloadend = makeProcess(file.name);
 		reader.readAsText(file);
 	}
-}); 
+});
+
+document.getElementById('buttonMin').addEventListener('click', function(e) {
+	var minimum = Math.min.apply(null, [].slice.call(document.querySelectorAll('#results .result .wartoscFCelu')).map(x=>parseInt(x.innerHTML)));
+	//alert("Minimum ze Wszystkiego to: \n"+minimum);
+	document.getElementById('wartoscMin').innerHTML = minimum;
+});

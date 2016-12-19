@@ -10,11 +10,12 @@
 	<body>
 		<form>
 			<input type="file" id="upload" multiple>
+			<button id="buttonMin" type="button"> Min z All </button>
+			<span id="wartoscMin"> </span>
 		</form>
-		
-
 		<div style="display: none" class="template">
 			<div class="result">
+				<h2 class="nazwaPliku"></h2>
 				<table border>
 					<tr>
 						<td> Numer wyniku </td> 
@@ -29,7 +30,8 @@
 						<td> Czas trwania idle na M2</td>
 					</tr>
 					<tr>
-						<td class="tytulGrafu"> </td> 
+
+						<td class="tytulGrafu"></td> 
 						<td class="wartoscFCelu"></td>
 						<td class="lPrzerwM1"></td>
 						<td class="cPrzerwM1"></td>
@@ -52,6 +54,5 @@
 		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js">
 		</script>
 		<script type="text/javascript" src="wykres.js"></script>
-		
 	</body>
 </html>
