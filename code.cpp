@@ -25,7 +25,7 @@ using namespace std;
 #define TESTPARAM false // tryb testowania parametrow [true/false] (potrzebne aby odczytywac tylko jedna i ta sama instancje z pliku
 #define TEST_NAME_READ "instancja_testowa.txt"// nazwa instancji testowej do odczytu
 #define TEST_NAME_WRITE "instancja_testowa_wynik.txt"// nazwa instancji testowej do zapisu
-#define DEBUG false // TRYB DEBUGOWANIA [true / false]
+#define DEBUG true // TRYB DEBUGOWANIA [true / false]
 
 // PARAMETRY METAHEURESTYKI
 #define MIN_TASK_COUNTER 30 // PO ilu iteracjach sprawdzać zapętlenie [Wartość liczbowa > 0]
@@ -39,7 +39,8 @@ using namespace std;
 #define PROBABILTY_OF_RANDOM_GENERATION 100 // Prawdopodobieństwo stworzenia rozwiązań przez los (dopełnienie to przez macierz feromonową
 #define STEP_PROBABILTY_OF_RANDOM_GENERATION 0.4 // Skok w dół prawdopodobieństwa losowego rozwiązania
 
-#define MAX_TASK_CHECK (3*INSTANCE_SIZE) // Dopuszczalna ilość iteracji aby wylosować numer kolejnego zadania w generatorze z macierzą
+#define MAX_TASK_CHECK (2*INSTANCE_SIZE) // Dopuszczalna ilość iteracji aby wylosować numer kolejnego zadania w generatorze z macierzą
+#define MAX_ITER_MAINTENACE_TEST (MAINTENANCE_FIRST_PROCESSOR + MAINTENANCE_SECOND_PROCESSOR) // Dopuszczalna ilość iteracji aby ustawić przerwanie
 
 #define PROCENT_ZANIKANIA 10 // Ile procennt śladu feromonowego ma znikać co iterację
 
@@ -52,23 +53,20 @@ using namespace std;
 // PARAMTERY PROBLEMU SZEREGOWANIA ZADAN
 
 #define LOWER_TIME_TASK_LIMIT 5 // Dolne ograniczenie długości zadania [Wartość liczbowa > 0]
-#define UPPER_TIME_TASK_LIMIT 150 // Górne ograniczenie długości zadania [Wartość liczbowa > 0]
+#define UPPER_TIME_TASK_LIMIT 30 // Górne ograniczenie długości zadania [Wartość liczbowa > 0]
 
 #define MAINTENANCE_FIRST_PROCESSOR 15 // Ilość przerwań na pierwszej maszynie [Wartość liczbowa >= INSTANCE_SIZE/5]
 #define MAINTENANCE_SECOND_PROCESSOR 15 // Ilość przerwań na drugiej maszynie [Wartość liczbowa >= INSTANCE_SIZE/5]
 
-#define LOWER_TIME_MAINTENANCE_LIMIT 10 // Dolne ograniczenie długości przerwania [Wartość liczbowa >= 0]
-#define UPPER_TIME_MAINTENANCE_LIMIT 70 // Górne ograniczenie długości przerwania [Wartość liczbowa > 0]
+#define LOWER_TIME_MAINTENANCE_LIMIT 20 // Dolne ograniczenie długości przerwania [Wartość liczbowa >= 0]
+#define UPPER_TIME_MAINTENANCE_LIMIT 90 // Górne ograniczenie długości przerwania [Wartość liczbowa > 0]
 
 #define LOWER_READY_TIME_MAINTENANCE_LIMIT 0 // Dolne ograniczenie czasu gotowości przerwania [Wartość liczbowa >= 0]
-#define UPPER_READY_TIME_MAINTENANCE_LIMIT (UPPER_TIME_TASK_LIMIT*INSTANCE_SIZE) // Górne ograniczenie czasu gotowości przerwania [Wartość liczbowa > 0]
+#define UPPER_READY_TIME_MAINTENANCE_LIMIT (UPPER_TIME_MAINTENANCE_LIMIT * 2 * MAINTENANCE_FIRST_PROCESSOR) // Górne ograniczenie czasu gotowości przerwania [Wartość liczbowa > 0]
 
 #define NUMBER_OF_INSTANCES 10 // dla ilu roznych instancji bedzie dziala metaheurysttyka
 
 #define INSTANCE_SIZE 50 // Rozmiar instancji problemu
-
-
-
 
 ofstream debugFile; // Zmienna globalna używana przy DEBUG mode
 unsigned long int firstSolutionValue; // Zmienna globalna najlepszego rozwiązania wygenerowanego przez generator losowy
@@ -138,10 +136,10 @@ inline void GeneratorPrzestojow(vector<Maintenance*> &lista) {
 
         // Randomowy czas trwania
         int duration = LOWER_TIME_MAINTENANCE_LIMIT + (int)(rand() / (RAND_MAX + 1.0) * UPPER_TIME_MAINTENANCE_LIMIT);
-        przerwa->duration = duration;
 
         // Random punkt startu + sprawdzenie czy jest to możliwe
         int readyTime = 0;
+        int iteracja = 0;
         int startTimeCheck, stopTimeCheck = 0;
 
         while(true) {
@@ -161,6 +159,14 @@ inline void GeneratorPrzestojow(vector<Maintenance*> &lista) {
             if(!repeatCheck) {
                 break; // Można opuścić pętle while - znaleziono konfigurację dla przerwania
             }
+
+            if(iteracja > MAX_ITER_MAINTENACE_TEST) {
+				// Nowy czas trwania
+				iteracja = 0;
+				duration = LOWER_TIME_MAINTENANCE_LIMIT + (int)(rand() / (RAND_MAX + 1.0) * UPPER_TIME_MAINTENANCE_LIMIT);
+            }
+
+            iteracja++;
         }
 
         // Zapis przerwania w tablicy pomocniczej
@@ -1740,7 +1746,7 @@ inline void Turniej(vector< vector<Task*> > &solutionsList) {
     int first, second;
 
     if(DEBUG)
-        debugFile << "Kill = " << toKill << endl;
+        debugFile << "Kill = " << toKill << " z " << size << " operacji wejsciowych." << endl;
 
     // Pętla operacyjna
     while(toKill > 0) {
@@ -1967,12 +1973,12 @@ inline void GlownaPetlaMety (vector<Task*> &listaZadan, vector<Maintenance*> &li
     // 2. Metaheurystyka pracuje już samodzielnie
     while ((clock()-czasStart)<MAX_DURATION_PROGRAM_TIME*CLOCKS_PER_SEC) { // warunek by meta nie działała dłużej niz MAX_DURATION_PROGRAM_TIME
         numerIteracji++;
-        if(DEBUG) cout<<clock()-czasStart<<endl;
+        if(DEBUG) debugFile<<clock()-czasStart<<endl;
         probabilityOfRandomGeneration -= STEP_PROBABILTY_OF_RANDOM_GENERATION;
         if(probabilityOfRandomGeneration < 0) {
             probabilityOfRandomGeneration = 0;
         }
-        if(DEBUG) cout << "Prawdopod. = " << probabilityOfRandomGeneration << endl;
+        if(DEBUG) debugFile << "Prawdopod. = " << probabilityOfRandomGeneration << endl;
 
         for(int i = 0; i < MAX_SOLUTIONS; i++) {
             if((rand()+1.0) < RAND_MAX * probabilityOfRandomGeneration/100) { // tworzy totalnie losowe z prawdopodobienstwem
@@ -2045,72 +2051,9 @@ inline void GlownaPetlaMety (vector<Task*> &listaZadan, vector<Maintenance*> &li
             } else liczbaRozwiazanZGorszymWynikiem++; // jezeli tak to zaznaczamy ze to rozwiazanie nie poprawilo wyniku o wiecej niz EPSILON
         }
 
-				} else { // tworzy za pomoca tablicy fermonow
-					// Utworzenie rozwiązania
-					tempTask = GeneratorZMacierzaFeromonowa(listaZadan,listaPrzerwanFirstProcessor,listaPrzerwanSecondProcessor);
+        tempTask.clear();
 
-					if(DEBUG)
-						debugFile << "Generator z macierza feromonowa" << endl;
-				}
-
-				// Dodanie rozwiązania
-					listaRozwiazan.push_back(tempTask);
-					tempTask.clear(); // Czyszczenie wektora by wyelimonować możliwe problemy
-			}
-
-			// Zrobienie mutacji
-			int maxMutants = MAX_SOLUTION_AFTER_MUTATION - MAX_SOLUTIONS;
-			for(int i=0; i < maxMutants; i++) {
-				tempTask = Mutacja(listaRozwiazan[i % MAX_SOLUTIONS],listaPrzerwanFirstProcessor,listaPrzerwanSecondProcessor);
-				listaRozwiazan.push_back(tempTask);
-				tempTask.clear();
-			}
-
-			// Turniej utworzonych zadań
-			Turniej(listaRozwiazan);
-
-			// Sortowanie po czasie zakończenia
-			SortujListeZadanPoEndTime(listaRozwiazan);
-
-			// Utworzenie tablicy funkcji celu
-			int tablicaWartosciFunkcjiCelu[listaRozwiazan.size()];
-			utworzTabliceFunkcjiCelu(listaRozwiazan,tablicaWartosciFunkcjiCelu);
-
-			// Uzupełnienie macierzy feromonowej
-			DodajDoMacierzyFeromonowej(listaRozwiazan,tablicaWartosciFunkcjiCelu);
-
-			// Zanik śladu feromonowego
-			zanikMacierzFeromonowa();
-
-			//funkcja splaszczajaca
-			if(!(numerIteracji % CO_ILE_ITERACJI_WIERSZ)) {
-				FunkcjaSplaszczajaca(aktualnyWiersz);
-				aktualnyWiersz = (aktualnyWiersz + 1) % INSTANCE_SIZE; //wylicza aktualny wiersz do funkcji
-			}
-
-			// zapamietywanie najlepszego rozwiazania
-			tempTask = ZnajdzNajlepszeRozwiazanie(listaRozwiazan);// najlepsze z tej iteracji
-			wartoscFCeluAktualnegoRozwiazania = ObliczFunkcjeCelu(tempTask);
-			if(wartoscFCeluAktualnegoRozwiazania < wartoscFunkcjiCeluNajlepszegoRozwiazania) { // porownanie z najlepszym globalnie
-				wartoscFCeluPoprzedniego = ObliczFunkcjeCelu(najlepszeRozwiazanie); // zapamietanie poprzedniego najlepszego wyniku
-				najlepszeRozwiazanie.clear(); // czyszcze dla pewnosci
-				KopiujDaneOperacji(tempTask,najlepszeRozwiazanie); // kopia do najlepszego
-				wartoscFunkcjiCeluNajlepszegoRozwiazania = wartoscFCeluAktualnegoRozwiazania; // aktualizacja wartosci ; )
-			}
-
-			// sprawdzenie czy ostatnie X rozwiazan miesci sie w EPSILON - DODATKOWY WARUNEK STOPU
-			if(wartoscFCeluAktualnegoRozwiazania>= wartoscFCeluPoprzedniego) { // jezeli aktualny jest gorszy niz najlepszy
-				liczbaRozwiazanZGorszymWynikiem++;  // dodajemy jeden, bo ten wynik nie poprawil
-				if(liczbaRozwiazanZGorszymWynikiem >= ROZMIAR_HISTORII_ROZWIAZAN) break; // jezeli przekroczy narzucona wartosc to zatrzyujemy metaheurestyke
-			} else { // przeciwny wypadek, wiec teraz mamy lepsze rozwiazanie
-				if((wartoscFCeluPoprzedniego-wartoscFCeluAktualnegoRozwiazania)>EPSILON_WYNIKU) { // czy to rozwiazanie miesci sie w naszym epsilon
-					liczbaRozwiazanZGorszymWynikiem=0; // jezeli nie to zerujemy bo mamy postep wiekszy niz zakladalismy
-				} else liczbaRozwiazanZGorszymWynikiem++; // jezeli tak to zaznaczamy ze to rozwiazanie nie poprawilo wyniku o wiecej niz EPSILON
-			}
-
-			tempTask.clear();
-
-		}
+    }
     // zapisz najlepszego rozwiazania do pliku
     string nazwa = "INSTANCJA_" + to_string(numerInstancjiProblemu);
     ZapiszWynikiDoPliku(najlepszeRozwiazanie, listaPrzerwanFirstProcessor, listaPrzerwanSecondProcessor, firstSolutionValue,numerInstancjiProblemu,nazwa);
