@@ -1779,6 +1779,65 @@ inline void Turniej(vector< vector<Task*> > &solutionsList) {
     delete[] solutionsValue;
 }
 
+inline void TurniejV2(vector< vector<Task*> > &solutionsList) {
+    // Przeliczenie rozmiaru otrzymanej struktury listy rozwiązań
+    int solutionsListSize = solutionsList.size();
+
+    // Utworzenie wektora wynikowego
+    vector< vector<Task*> > listaTymczasowa;
+
+    // Turniej - wracamy do ilości rozwiązań jakie chcemy wygenerować
+    int toSave = MAX_SOLUTIONS;
+    int first, second;
+
+    if(DEBUG)
+        debugFile << "Zostawiamy = " << toSave << " z " << solutionsListSize << " operacji wejsciowych." << endl;
+
+    // Pętla operacyjna
+    if(toSave > solutionsListSize) {
+    while(toSave > 0) {
+        first = (int)(rand() / (RAND_MAX + 1.0) * solutionsListSize);
+        second = (int)(rand() / (RAND_MAX + 1.0) * solutionsListSize);
+
+        if(DEBUG)
+            debugFile << "First = " << first << " second =" << second << endl;
+
+        if(first != second) {
+            // Sprawdzamy które z rozwiązań ma mniejszą wartość funkcji celu
+            if(ObliczFunkcjeCelu(solutionsList[first]) < ObliczFunkcjeCelu(solutionsList[second])) {
+				// Przechodzi pierwsze rozwiązanie
+				listaTymczasowa.push_back(solutionsList[first]);
+            } else {
+				// Przechodzi drugie rozwiązanie
+				listaTymczasowa.push_back(solutionsList[second]);
+            }
+
+            // Usuwamy dane z listy
+            if(first < second) {
+				solutionsList.erase(solutionsList.begin() + second);
+				solutionsList.erase(solutionsList.begin() + first);
+            } else {
+				solutionsList.erase(solutionsList.begin() + first);
+				solutionsList.erase(solutionsList.begin() + second);
+            }
+
+            toSave--;
+            solutionsListSize -= 2;
+        } else
+            continue; // Ponawiamy iterację gdy trafiliśmy na to samo rozwiązanie przy losowaniu numerów
+    }
+
+		// Ustawiamy listę wejściową
+		solutionsList.clear();
+		solutionsListSize = listaTymczasowa.size();
+		for(int i = 0; i < solutionsListSize; i++) {
+			solutionsList.push_back(listaTymczasowa[i]);
+		}
+
+		listaTymczasowa.clear();
+    }
+}
+
 inline void KopiujDaneOperacji(vector<Task*> &listaWejsciowa, vector<Task*> &listaWyjsciowa) {
     // Zmienna pomocnicza by skrócić czas pracy (nie trzeba x razy liczyć)
     int size = listaWejsciowa.size();
@@ -1957,7 +2016,7 @@ inline void GlownaPetlaMety (vector<Task*> &listaZadan, vector<Maintenance*> &li
     }
 
     // Utworzone rozwiązania poddajemy turniejowi a także dokonujemy uzupełnienia macierzy feromonowej
-    Turniej(listaRozwiazan);
+    TurniejV2(listaRozwiazan);
     SortujListeZadanPoEndTime(listaRozwiazan);
     int tablicaWartosciFunkcjiCelu[listaRozwiazan.size()];
     utworzTabliceFunkcjiCelu(listaRozwiazan, tablicaWartosciFunkcjiCelu);
@@ -2010,7 +2069,7 @@ inline void GlownaPetlaMety (vector<Task*> &listaZadan, vector<Maintenance*> &li
         }
 
         // Turniej utworzonych zadań
-        Turniej(listaRozwiazan);
+        TurniejV2(listaRozwiazan);
 
         // Sortowanie po czasie zakończenia
         SortujListeZadanPoEndTime(listaRozwiazan);
